@@ -6,7 +6,8 @@
         "php": ">=7.1",
         "guzzlehttp/guzzle" : "^6.5.2",
         "zendframework/zend-diactoros": "^2.2.1",
-        "jenssegers/proxy" : "^3.1.0"
+        "jenssegers/proxy" : "^3.1.0",
+        "webfan3/hps" : "*"
     },
     "license": "MIT",
     "authors": [
