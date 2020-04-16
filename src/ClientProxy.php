@@ -12,7 +12,8 @@ use Zend\Diactoros\Uri;
 
 class ClientProxy extends BaseProxy
 {
-	protected $toUri = null;
+	
+    protected $toUri = null;
     public function __construct(AdapterInterface $adapter, $toUri = null)
     {
      //   call_user_func_array(parent::__construct, func_get_args());
