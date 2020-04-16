@@ -1,0 +1,22 @@
+{
+    "name": "frdl/proxy",
+    "description": "php proxy scripts",
+    "type": "library",
+    "require": {
+        "php": ">=7.1",
+        "guzzlehttp/guzzle" : "^6.5.2",
+        "zendframework/zend-diactoros": "^2.2.1"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Till Wehowski",
+            "email": "software@frdl.de"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "frdl\\Proxy\\": "src/"
+        }
+    }
+}
