@@ -11,8 +11,8 @@ use GuzzleHttp\Client as Client;
 use webfan\hps\patch\Uri as Uri;
 use webfan\hps\patch\Request as Request;
 
-use function webfan\hps\patch\originHeaders;
-use function webfan\hps\patch\lastModified;
+
+
 
 
 class Proxy
@@ -33,12 +33,12 @@ class Proxy
 	
 	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null){
 		
-		   (new \frdl\webfan\App\LoadSomeCoreFunctions());
-           (new \GuzzleHttp\LoadGuzzleFunctionsForFrdl());
+		//   (new \frdl\webfan\App\LoadSomeCoreFunctions());
+        (new \GuzzleHttp\LoadGuzzleFunctionsForFrdl());
 		
 		$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $_SERVER['SERVER_NAME'];
 		$this->httpHost = $httpHost ? $httpHost : $_SERVER['HTTP_HOST'];
-		$this->protocol = $protocol ? $protocol : ((\frdl\webfan\App::God(false)->is_ssl()) ? 'https' : 'http');
+		$this->protocol = $protocol ? $protocol : (($this->is_ssl()) ? 'https' : 'http');
 		$this->targetLocation = $targetLocation ? $targetLocation : $_SERVER['REQUEST_URI'];
 		$this->method = $method ? $method : $_SERVER['REQUEST_METHOD'];	
 		$this->deploy = $deploy;
@@ -48,7 +48,18 @@ class Proxy
 		
 	}
 	
-	
+
+  public function is_ssl() {
+    if ( isset($_SERVER) && isset($_SERVER['HTTPS']) ) {
+        if ( 'on' == strtolower($_SERVER['HTTPS']) )
+            return true;
+        if ( '1' == $_SERVER['HTTPS'] )
+            return true;
+    } elseif (isset($_SERVER) && isset($_SERVER['SERVER_PORT']) && ( '443' == $_SERVER['SERVER_PORT'] ) ) {
+        return true;
+    }
+     return false;	
+   }	
 	
 	public function bounce(){
 		return isset($_SERVER['HTTP_X_FRDLWEB_PROXY']) 
@@ -104,7 +115,43 @@ class Proxy
 	  return $response;	
 	}
 	
+	public function parseHeaders($serverVars = null, &$ifNoneMatch = null, &$ifModifiedSince=null){
+if( !is_array($serverVars))$serverVars = $_SERVER;
+
+$headers = array();
+foreach($_SERVER as $key=>$value)
+{
+                if (substr($key,0,5)=="HTTP_") {
+                     $key=str_replace(" ","-",ucwords(strtolower(str_replace("_"," ",substr($key,5)))));
+                     $headers[$key]=$value;
+                     if( $key == 'If-None-Match' )
+                      {
+                        $ifNoneMatch = $headers['If-None-Match'];
+                        if(substr($ifNoneMatch, 0, 1) !== '"')$ifNoneMatch = null;
+                      }
+                     if( $key == 'If-Modified-Since' )
+                      {
+                        $ifModifiedSince = $headers['If-Modified-Since'];
+                      }
+                }
+}
+return $headers;
+}
 	
+	
+	
+	public function unparse_url($parsed_url) {
+  $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+  $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+  $port     = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
+  $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+  $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
+  $pass     = ($user || $pass) ? "$pass@" : '';
+  $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+  $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+  $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
+  return "$scheme$user$pass$host$port$path$query$fragment";	
+}
 	
 	protected function createServerRequest(
 		
@@ -134,7 +181,7 @@ class Proxy
 		$cookies = $cookies?:$_COOKIE;
 		$query = $query?:$_GET;
 		$method = $method?:$server['REQUEST_METHOD'];
-		$headers= $headers?: \frdl\webfan\App::God(false)->{'parseHeaders'}($server);
+		$headers= $headers?: $this->{'parseHeaders'}($server);
 		//if (null === $cookies && null!==$headers && array_key_exists('cookie', $headers)) {
          //   $cookies = parseCookieHeader($headers['cookie']);
       //  }
@@ -159,7 +206,7 @@ class Proxy
 		}		
 		
 		
-		$uri = (is_string($url)) ? new Uri($url) :new Uri( \frdl\webfan\App::God(false)->unparse_url($p) ) ;
+		$uri = (is_string($url)) ? new Uri($url) :new Uri( $this->unparse_url($p) ) ;
 	
 
 		$uri->withQuery($query);
@@ -278,7 +325,7 @@ class Proxy
 		 $url = rtrim($reverse_protocol, ':// ').'://'.$reverse_host.''.$reverse_uri;	
 
 		 $request =	$this-> createServerRequest( $host, $url, $method, $_GET/*$query$Params*/, 
-												\frdl\webfan\App::God(false)->{'parseHeaders'}($serverVars)/* $headers*/,
+												$this->{'parseHeaders'}($serverVars)/* $headers*/,
 												$_COOKIE, $_FILES, $serverVars//,
 												//'php://input'
 												//$_POST
@@ -291,8 +338,8 @@ class Proxy
 			 'http_errors' => false
 		 ], $config));
          $adapter = new GuzzleAdapter($guzzle);	
-         $proxy = new \webfan\hps\Client\Proxy($adapter, $request->getUri());
-
+        // $proxy = new \webfan\hps\Client\Proxy($adapter, $request->getUri());
+           $proxy = new ClientProxy($adapter, $request->getUri());
 
 		
 		
@@ -409,7 +456,3 @@ class Proxy
 	}
 	
 } 
-	
-	 
-	
-	
