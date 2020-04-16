@@ -1,7 +1,6 @@
 {
     "name": "frdl/proxy",
     "description": "php proxy scripts",
-    "type": "library",
     "require": {
         "php": ">=7.1",
         "psr/http-message" : "*",
