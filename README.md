@@ -1,2 +1,2 @@
-# proxy
-Frdlweb proxy module
+# frdl/proxy
+php proxy scripts
