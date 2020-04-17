@@ -60,7 +60,16 @@ class Proxy
     return $this;
   }
 	
-	
+
+  public function withFakeHeader(?string $withFakeHeader = null){
+	if(null===$withFakeHeader){
+	   return $this->withFakeHost(true);	
+	}
+	  
+	$this->fakeHeader = $withFakeHeader;  
+	  
+    return $this;
+  }	
 	
   public function is_ssl() {
     if ( isset($_SERVER) && isset($_SERVER['HTTPS']) ) {
