@@ -1,7 +1,6 @@
 <?php 
 namespace frdl\Proxy;
 
-use Proxy\Proxy as Proxy;
 use Proxy\Adapter\Guzzle\GuzzleAdapter as GuzzleAdapter;
 use Proxy\Filter\RewriteLocationFilter as RewriteLocationFilter;
 use Proxy\Filter\RemoveEncodingFilter as RemoveEncodingFilter;
