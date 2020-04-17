@@ -30,6 +30,7 @@ class Proxy
 	protected $protocol;
 	protected $deploy;		
 	protected $HostHeaderOverwrite = false;
+	protected $fakeHeader;
 	
 	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null, bool $HostHeaderOverwrite = null){
 
@@ -42,7 +43,7 @@ class Proxy
 		$this->method = $method ? $method : $_SERVER['REQUEST_METHOD'];	
 		$this->deploy = $deploy;
 		$this->HostHeaderOverwrite = $HostHeaderOverwrite ? $HostHeaderOverwrite : false;
-		
+		$this->fakeHeader = self::HEADER_HOST_IMPERSONATION;
 		$_SERVER['SERVER_ADDR'] = (isset($_SERVER['SERVER_ADDR'])) ? $_SERVER['SERVER_ADDR'] : \gethostbyname( $_SERVER['SERVER_NAME'] );
 		$_SERVER['SERVER_NAME'] = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
 		
@@ -260,7 +261,7 @@ return $headers;
 			 $headers
 		 ))
 			 
-			 ->withHeader(self::HEADER_HOST_IMPERSONATION, $host)
+			 ->withHeader($this->fakeHeader, $host)
 			 ->withHeader(self::HEADER_IP_IMPERSONATION, $forIp)
 			  ->withMethod($method)	
 			  ->withBody($stream)
@@ -371,7 +372,7 @@ return $headers;
 			 $forIp = ((isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
 			 $request = $request->withHeader(self::HEADER_IP_IMPERSONATION, $forIp);
 		
-	         $request = $request->withHeader(self::HEADER_HOST_IMPERSONATION, $host);
+	         $request = $request->withHeader($this->fakeHeader, $host);
 			 $request = $request->withHeader('X-Frdlweb-Proxy',  $_SERVER['SERVER_ADDR']);		
 		
      return $proxy
@@ -383,7 +384,7 @@ return $headers;
 
 			
 		      
-			 $request = $request->withHeader(self::HEADER_HOST_IMPERSONATION, $host);
+			 $request = $request->withHeader($this->fakeHeader, $host);
 			 $request = $request->withHeader('X-Frdlweb-Proxy', $_SERVER['SERVER_ADDR']);			
 
 						
