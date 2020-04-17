@@ -28,9 +28,10 @@ class Proxy
 	protected $targetLocation;
 	protected $method;
 	protected $protocol;
-	protected $deploy;
+	protected $deploy;		
+	protected $HostHeaderOverwrite = false;
 	
-	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null){
+	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null, bool $HostHeaderOverwrite = null){
 		
 		//   (new \frdl\webfan\App\LoadSomeCoreFunctions());
         (new \GuzzleHttp\LoadGuzzleFunctionsForFrdl());
@@ -41,6 +42,7 @@ class Proxy
 		$this->targetLocation = $targetLocation ? $targetLocation : $_SERVER['REQUEST_URI'];
 		$this->method = $method ? $method : $_SERVER['REQUEST_METHOD'];	
 		$this->deploy = $deploy;
+		$this->HostHeaderOverwrite = $HostHeaderOverwrite ? $HostHeaderOverwrite : false;
 		
 		$_SERVER['SERVER_ADDR'] = (isset($_SERVER['SERVER_ADDR'])) ? $_SERVER['SERVER_ADDR'] : \gethostbyname( $_SERVER['SERVER_NAME'] );
 		$_SERVER['SERVER_NAME'] = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
@@ -373,7 +375,11 @@ return $headers;
 			 $request = $request->withHeader(self::HEADER_HOST_IMPERSONATION, $host);
 			 $request = $request->withHeader('X-Frdlweb-Proxy', $_SERVER['SERVER_ADDR']);			
 
-			
+						
+		    if(true===$this->HostHeaderOverwrite){			
+			    $request = $request->withHeader('Host', $host);			
+		    }
+		    
 
 	$response = $next($request, $response);
     $MyResponse = new $ClassResponse($response);
