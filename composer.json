@@ -3,7 +3,7 @@
     "description": "php proxy scripts",
     "require": {
         "php": ">=7.1",
-        "psr/http-message" : "*",
+        "psr/http-message" : "1.0.1",
         "guzzlehttp/guzzle" : "^6.5.2",
         "zendframework/zend-diactoros": "^2.2.1",
         "jenssegers/proxy" : "^3.1.0",
