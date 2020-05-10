@@ -404,6 +404,7 @@ function _idn_uri_convert(UriInterface $uri, $options = 0)
     return $uri;
 }
 
+}//!exists
 	
 }//namespace GuzzleHttp
 
@@ -427,6 +428,8 @@ use Psr\Http\Message\UriInterface;
  *
  * @return string
  */
+if(!\function_exists('\GuzzleHttp\Psr7\MessageInterface')){	
+	
 function str(MessageInterface $message)
 {
     if ($message instanceof RequestInterface) {
@@ -1310,7 +1313,7 @@ function _caseless_remove($keys, array $data)
     return $result;
 }
 
-	
+}//!exists
 
 }//namespace GuzzleHttp\Psr7
 
@@ -1323,6 +1326,9 @@ function _caseless_remove($keys, array $data)
 
 namespace GuzzleHttp\Promise{
 
+	
+
+if(!\function_exists('\GuzzleHttp\Promise\queue')){
 /**
  * Get the global task queue used for promise resolution.
  *
