@@ -9,10 +9,16 @@ use GuzzleHttp\Handler\StreamHandler;
 use Psr\Http\Message\UriInterface;
 
 
+if(\class_exists(LoadGuzzleFunctionsForFrdl::class, false))return;		
+	
 class LoadGuzzleFunctionsForFrdl
 {
 	
 }
+	
+
+if(!\function_exists('\GuzzleHttp\uri_template')){
+	
 /**
  * Expands a URI template
  *
@@ -1772,5 +1778,5 @@ function coroutine(callable $generatorFn)
     return new Coroutine($generatorFn);
 }
 	
-
+}//!exists
 }//namespace GuzzleHttp\Promise
