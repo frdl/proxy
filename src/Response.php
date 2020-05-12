@@ -1,9 +1,8 @@
 <?php 
-	
-namespace Webfan\App;
+namespace frdl\Proxy;
 
 
-class TestResponse	
+class Response	
 {
 	protected $_response;
 	public function __construct(\Psr\Http\Message\ResponseInterface $response){
