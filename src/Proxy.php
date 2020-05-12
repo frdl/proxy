@@ -34,7 +34,7 @@ class Proxy
 	
 	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null, bool $HostHeaderOverwrite = null){
 
-                (new \GuzzleHttp\LoadGuzzleFunctionsForFrdl());
+          
 		
 		$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $_SERVER['SERVER_NAME'];
 		$this->httpHost = $httpHost ? $httpHost : $_SERVER['HTTP_HOST'];
