@@ -17,8 +17,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "frdl\\Proxy\\": "src/",
-            "GuzzleHttp\\" : "guzzle-helpers/"
+            "frdl\\Proxy\\": "src/"
         }
     }
 }
