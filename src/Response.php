@@ -35,7 +35,7 @@ class Response
 			return $this->_response->getBody();
 	     }	
 
-		 return (new \Zend\Diactoros\Response\SapiStreamEmitter)->emit($this->_response);
+		 return (new \Laminas\HttpHandlerRunner\Emitter\SapiEmitterr)->emit($this->_response);
 	}	
 }
 
