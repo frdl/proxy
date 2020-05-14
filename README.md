@@ -34,6 +34,7 @@ use frdl\Proxy\Proxy;
 Internally the proxy ignores the `bounce`-detection silently to fallback to any localhost scripts.
 You can use it before/without handling the HTTP-Forwarding, e.g. to perform a (test-)request on the same host.
 ````php
+<?php
 if(!$proxy->bounce()){	
  	$proxy = (new Proxy(null,
                       $_SERVER['REQUEST_URI'],
