@@ -36,7 +36,7 @@ You can use it before/without handling the HTTP-Forwarding, e.g. to perform a (t
 ````php
 <?php
 if(!$proxy->bounce()){	
- 	$proxy = (new Proxy(null,
+ 	$proxy = (new Proxy('blue',
                       $_SERVER['REQUEST_URI'],
                       'blue.example.com',  //target host
                       'example.com',  //set the host header on the target script
