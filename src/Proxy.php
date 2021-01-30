@@ -10,7 +10,10 @@ use GuzzleHttp\Client as Client;
 use webfan\hps\patch\Uri as Uri;
 use webfan\hps\patch\Request as Request;
 
-
+use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\Handler\CurlMultiHandler;
+use GuzzleHttp\Handler\Proxy as ProxyHandler;
+use GuzzleHttp\Handler\StreamHandler;
 
 
 
@@ -34,13 +37,7 @@ class Proxy
 	
 	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null, bool $HostHeaderOverwrite = null){
 
-          if(!function_exists('\GuzzleHttp\choose_handler')
-		&& class_exists(\GuzzleHttp\LoadGuzzleFunctionsForFrdl::class)){
-		  $dummy = new \GuzzleHttp\LoadGuzzleFunctionsForFrdl();
-	  }
-			
-			
-		$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $_SERVER['SERVER_NAME'];
+     		$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $_SERVER['SERVER_NAME'];
 		$this->httpHost = $httpHost ? $httpHost : $_SERVER['HTTP_HOST'];
 		$this->protocol = $protocol ? $protocol : (($this->is_ssl()) ? 'https' : 'http');
 		$this->targetLocation = $targetLocation ? $targetLocation : $_SERVER['REQUEST_URI'];
@@ -53,7 +50,30 @@ class Proxy
 		
 	}
 	
+function choose_handler()
+{
+    $handler = null;
+    if (function_exists('curl_multi_exec') && function_exists('curl_exec')) {
+        $handler = ProxyHandler::wrapSync(new CurlMultiHandler(), new CurlHandler());
+    } elseif (function_exists('curl_exec')) {
+        $handler = new CurlHandler();
+    } elseif (function_exists('curl_multi_exec')) {
+        $handler = new CurlMultiHandler();
+    }
 
+    if (ini_get('allow_url_fopen')) {
+        $handler = $handler
+            ? ProxyHandler::wrapStreaming($handler, new StreamHandler())
+            : new StreamHandler();
+    } elseif (!$handler) {
+        throw new \RuntimeException('GuzzleHttp requires cURL, the '
+            . 'allow_url_fopen ini setting, or a custom HTTP handler.');
+    }
+
+    return $handler;
+}
+	
+	
   public function withFakeHost(?bool $withFakeHost = null){
 	if(null===$withFakeHost){
 	   $withFakeHost = true;	
@@ -361,7 +381,8 @@ return $headers;
 		
          $guzzle = new Client(array_merge([
 		//	 'allow_redirects' => ['track_redirects' => true], 
-			 'http_errors' => false
+			 'http_errors' => false,
+		         'handler' => $this->choose_handler(),
 		 ], $config));
          $adapter = new GuzzleAdapter($guzzle);	
         // $proxy = new \webfan\hps\Client\Proxy($adapter, $request->getUri());
