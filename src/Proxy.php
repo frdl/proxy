@@ -37,6 +37,9 @@ class Proxy
 	
 	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null, bool $HostHeaderOverwrite = null){
 
+		$l = new PatchAutoloadFunctions();
+		
+		
      		$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $_SERVER['SERVER_NAME'];
 		$this->httpHost = $httpHost ? $httpHost : $_SERVER['HTTP_HOST'];
 		$this->protocol = $protocol ? $protocol : (($this->is_ssl()) ? 'https' : 'http');
