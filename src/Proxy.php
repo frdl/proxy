@@ -50,7 +50,7 @@ class Proxy
 		
 	}
 	
-function choose_handler()
+protected function choose_handler()
 {
     $handler = null;
     if (function_exists('curl_multi_exec') && function_exists('curl_exec')) {
@@ -130,11 +130,15 @@ function choose_handler()
 		                             $this->targetLocation,
 		                             $this->httpHost,
 		                             $this->method,
-		                                [
-									//	 'allow_redirects' => ['track_redirects' => true],
-										 'allow_redirects' => false,
-										 'http_errors' => false
-										],
+		                                [								
+							//	 'allow_redirects' => ['track_redirects' => true],									
+							'allow_redirects' => false,									
+							'http_errors' => false,									
+							'handler' => $this->choose_handler(),									
+							'headers' => [											
+								'User-Agent' => __CLASS__,										
+							],									
+						],
 	                                    $_SERVER
 	                                   /*$reverse_host = null,
 		                                 $reverse_protocol = null,
