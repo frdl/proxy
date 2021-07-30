@@ -139,7 +139,8 @@ protected function choose_handler()
 							'http_errors' => false,									
 							'handler' => $this->choose_handler(),									
 							'headers' => [											
-								'User-Agent' => __CLASS__,										
+								'user-agent' => __CLASS__,	
+								'accept-encoding'=>'deflate, gzip',
 							],									
 						],
 	                                    $_SERVER
