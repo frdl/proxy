@@ -134,8 +134,7 @@ $stack->push(
 	      'X-Frdl-Content-Negotiation',
 	      'X-Frdlweb-Content-Negotiation',
 	      'X-Webfan-Content-Negotiation',
-      ])  
-    )
+      ]) 
     )
   ),
   'greedy-cache'
