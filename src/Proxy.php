@@ -122,7 +122,7 @@ $stack->push(
   new CacheMiddleware(
     new GreedyCacheStrategy(
       new FlysystemStorage(
-        new LocalFilesystemAdapter($dir)
+        new Local($dir)
       ),
       1800, // the TTL in seconds
       new KeyValueHttpHeader([
