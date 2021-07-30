@@ -34,6 +34,29 @@ class Proxy
 	protected $deploy;		
 	protected $HostHeaderOverwrite = false;
 	protected $fakeHeader;
+	protected $_callStack = [];
+	
+	public function __call($name, $params){
+	    $ix = count($this->_callStack);
+	    $_method=explode('$', $name);
+	    $method = $_method[0];
+	    $when = 'createServerRequest';
+	    if(count($_method)>1 && isset($_method[1])){
+		if(is_numeric($_method[1])){
+		  $ix = intval($_method[1]);	
+		}else{
+		    $when = $_method[1];
+		}
+	    }else{
+		$when = 'createServerRequest';    
+	    }
+	    while(isset($this->_callStack[$ix])){
+		$ix++;    
+	    }
+	    $this->_callStack[$ix]=[$when, $method,$params];	
+            return $this;
+        }
+	
 	
 	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null, bool $HostHeaderOverwrite = null){
 
@@ -335,6 +358,14 @@ return $headers;
 		  $REQUEST = $REQUEST ->withHeader(self::HEADER_DEPLOY_NEGOTIATION, $this->deploy);			
 		}
 		
+		
+		foreach($this->_callStack as $_call){
+		    if(__FUNCTION__!== $_call[0]){
+			continue;    
+		    }
+		    $REQUEST = call_user_func_array([$REQUEST, $_call[1]], $_call[2]);
+		}
+		
 		return $REQUEST;
 	}
 	
@@ -396,7 +427,12 @@ return $headers;
         // $proxy = new \webfan\hps\Client\Proxy($adapter, $request->getUri());
            $proxy = new ClientProxy($adapter, $request->getUri());
 
-		
+		foreach($this->_callStack as $_call){
+		    if('Client' !==  $_call[0]){
+			continue;    
+		    }
+		    $proxy = call_user_func_array([$proxy, $_call[1]], $_call[2]);
+		}
 		
 		 $cstr = '';
 						  foreach($_COOKIE as $name => $value){
@@ -417,6 +453,13 @@ return $headers;
 	         $request = $request->withHeader($this->fakeHeader, $host);
 			 $request = $request->withHeader('X-Frdlweb-Proxy',  $_SERVER['SERVER_ADDR']);		
 		
+	       foreach($this->_callStack as $_call){
+		    if(__FUNCTION__!== $_call[0]){
+			continue;    
+		    }
+		    $request = call_user_func_array([$request, $_call[1]], $_call[2]);
+		}
+		
      return $proxy
 		 	 ->forward($request)
     	 
@@ -427,7 +470,8 @@ return $headers;
 			
 		      
 			 $request = $request->withHeader($this->fakeHeader, $host);
-			 $request = $request->withHeader('X-Frdlweb-Proxy', $_SERVER['SERVER_ADDR']);			
+			 $request = $request->withHeader('X-Frdlweb-Proxy', $_SERVER['SERVER_ADDR']);	
+			 $request = $request->withHeader('X-Forwarded-For', $_SERVER['REMOTE_ADDR']);			
 
 						
 		    if(true===$this->HostHeaderOverwrite){			
