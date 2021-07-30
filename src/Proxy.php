@@ -24,6 +24,8 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
 use Kevinrob\GuzzleCache\KeyValueHttpHeader;
 use Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy;
 
+use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
+use Doctrine\Common\Cache\FilesystemCache;
 
 class Proxy
 {
@@ -121,8 +123,8 @@ public function withCacheDir(string $dir = null, int $ttl= 1800, bool $force=tru
 $stack->push(
   new CacheMiddleware(
     new GreedyCacheStrategy(
-      new FlysystemStorage(
-        new Local($dir)
+      new DoctrineCacheStorage(
+        new FilesystemCache($dir)
       ),
       $ttl, // the TTL in seconds
       new KeyValueHttpHeader([
