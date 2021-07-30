@@ -6,8 +6,10 @@
         "zendframework/zend-diactoros": "2.2.1",
         "jenssegers/proxy" : "3.1.0",
         "webfan3/hps" : "*",
-        "laminas/laminas-httphandlerrunner" : "1.1.0"
+        "laminas/laminas-httphandlerrunner" : "1.1.0",
+        "kevinrob/guzzle-cache-middleware" : "*"
     },
+    "homepage": "https://github.com/frdl/proxy",
     "license": "MIT",
     "authors": [
         {
