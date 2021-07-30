@@ -1,4 +1,5 @@
 <?php 
+
 namespace frdl\Proxy;
 
 use Proxy\Adapter\Guzzle\GuzzleAdapter as GuzzleAdapter;
@@ -142,7 +143,7 @@ $stack->push(
   'greedy-cache'
 );
 
- $stack->push($this->_handler);
+// $stack->push($this->_handler);
 	
   $this->_handler = $stack;
 	
@@ -637,4 +638,4 @@ return $headers;
 	  ;		
 	}
 	
-} 
+}
