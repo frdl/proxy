@@ -107,7 +107,7 @@ public function withCacheMiddleware(CacheMiddleware $CacheMiddleware){
 }
 	
 	
-public function withCacheDir(string $dir = null, bool $force=true){
+public function withCacheDir(string $dir = null, int $ttl= 1800, bool $force=true){
 	
 	if(null === $dir){
 	   $dir =   \sys_get_temp_dir().\DIRECTORY_SEPARATOR.sha1(__FILE__);	
@@ -124,7 +124,7 @@ $stack->push(
       new FlysystemStorage(
         new Local($dir)
       ),
-      1800, // the TTL in seconds
+      $ttl, // the TTL in seconds
       new KeyValueHttpHeader([
 	      'Authorization', 
 	      'Host',
