@@ -15,6 +15,14 @@ use GuzzleHttp\Handler\CurlMultiHandler;
 use GuzzleHttp\Handler\Proxy as ProxyHandler;
 use GuzzleHttp\Handler\StreamHandler;
 
+use GuzzleHttp\HandlerStack;
+use Kevinrob\GuzzleCache\CacheMiddleware;
+use League\Flysystem\Adapter\Local;
+use Kevinrob\GuzzleCache\Strategy\PrivateCacheStrategy;
+use Kevinrob\GuzzleCache\Storage\FlysystemStorage;
+use League\Flysystem\Local\LocalFilesystemAdapter;
+use Kevinrob\GuzzleCache\KeyValueHttpHeader;
+use Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy;
 
 
 class Proxy
@@ -35,6 +43,8 @@ class Proxy
 	protected $HostHeaderOverwrite = false;
 	protected $fakeHeader;
 	protected $_callStack = [];
+	protected $_config=[];
+	protected $_handler;
 	
 	public function __call($name, $params){
 	    $ix = count($this->_callStack);
@@ -74,7 +84,79 @@ class Proxy
 		$_SERVER['SERVER_ADDR'] = (isset($_SERVER['SERVER_ADDR'])) ? $_SERVER['SERVER_ADDR'] : \gethostbyname( $_SERVER['SERVER_NAME'] );
 		$_SERVER['SERVER_NAME'] = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
 		
+		$this->_handler=$this->choose_handler();
+		
+		$this->_config = [								
+							//	 'allow_redirects' => ['track_redirects' => true],									
+							'allow_redirects' => false,									
+							'http_errors' => false,									
+							//'handler' => $this->choose_handler(),									
+							'headers' => [											
+								'user-agent' => __CLASS__,	
+								'accept-encoding'=>'deflate, gzip',
+							],									
+						];
 	}
+
+public function withCacheMiddleware(CacheMiddleware $CacheMiddleware){	
+   $stack = HandlerStack::create();	
+   $stack->push($CacheMiddleware);
+   $stack->push($this->_handler);	
+   $this->_handler = $stack;	
+  return $this;
+}
+	
+	
+public function withCacheDir(string $dir = null, bool $force=true){
+	
+	if(null === $dir){
+	   $dir =   \sys_get_temp_dir().\DIRECTORY_SEPARATOR.sha1(__FILE__);	
+	}
+	if(true === $force && !is_dir($dir)){
+	   mkdir($dir, 0755, true);	
+	}
+	
+	$stack = HandlerStack::create();
+	
+$stack->push(
+  new CacheMiddleware(
+    new GreedyCacheStrategy(
+      new FlysystemStorage(
+        new LocalFilesystemAdapter($dir)
+      ),
+      1800, // the TTL in seconds
+      new KeyValueHttpHeader([
+	      'Authorization', 
+	      'Host',
+	      'Origin', 
+	      'Cookie', 
+	      'Cache-Control', 
+	      'X-Frdl-Content-Negotiation',
+	      'X-Frdlweb-Content-Negotiation',
+	      'X-Webfan-Content-Negotiation',
+      ])  
+    )
+    )
+  ),
+  'greedy-cache'
+);
+
+ $stack->push($this->_handler);
+	
+  $this->_handler = $stack;
+	
+  return $this;
+}
+	
+public function withConfig(array $config){
+	$this->_config=array_merge($this->_config, $config);
+  return $this;
+}
+	
+public function withConfigValue(string $key, $value){
+	$this->_config[$key] = $value;
+  return $this;
+}
 	
 protected function choose_handler()
 {
@@ -156,16 +238,7 @@ protected function choose_handler()
 		                             $this->targetLocation,
 		                             $this->httpHost,
 		                             $this->method,
-		                                [								
-							//	 'allow_redirects' => ['track_redirects' => true],									
-							'allow_redirects' => false,									
-							'http_errors' => false,									
-							'handler' => $this->choose_handler(),									
-							'headers' => [											
-								'user-agent' => __CLASS__,	
-								'accept-encoding'=>'deflate, gzip',
-							],									
-						],
+		                             $this->_config,
 	                                    $_SERVER
 	                                   /*$reverse_host = null,
 		                                 $reverse_protocol = null,
@@ -378,14 +451,14 @@ return $headers;
 		                                 array $config = ['http_errors' => false],
 							             $serverVars = null,
 							             $ClassResponse = null){
-		
-		if(null===$reverse_host){
-	      $reverse_host = $_SERVER['HTTP_HOST'];	
-		}
 				
 		if(null===$serverVars){
 		  $serverVars = $_SERVER;	
-		}			
+		}
+		if(null===$reverse_host){
+	      $reverse_host = $serverVars['HTTP_HOST'];	
+		}
+					
 		if(null===$ClassResponse){
 		  $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';	
 		}			
@@ -421,8 +494,13 @@ return $headers;
          $guzzle = new Client(array_merge([
 		//	 'allow_redirects' => ['track_redirects' => true], 
 			 'http_errors' => false,
-		         'handler' => $this->choose_handler(),
-		 ], $config));
+		        // 'handler' => $this->choose_handler(),
+		 ], array_merge($config,
+			    [
+			      'handler'=>$this->_handler
+			    ]   
+		)));
+	 	
          $adapter = new GuzzleAdapter($guzzle);	
         // $proxy = new \webfan\hps\Client\Proxy($adapter, $request->getUri());
            $proxy = new ClientProxy($adapter, $request->getUri());
@@ -447,11 +525,11 @@ return $headers;
 			
 				
 			
-			 $forIp = ((isset($_SERVER['HTTP_X_FORWARDED_FOR'])) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR']);
+			 $forIp = ((isset($serverVars['HTTP_X_FORWARDED_FOR'])) ? $serverVars['HTTP_X_FORWARDED_FOR'] : $serverVars['REMOTE_ADDR']);
 			 $request = $request->withHeader(self::HEADER_IP_IMPERSONATION, $forIp);
 		
 	         $request = $request->withHeader($this->fakeHeader, $host);
-			 $request = $request->withHeader('X-Frdlweb-Proxy',  $_SERVER['SERVER_ADDR']);		
+			 $request = $request->withHeader('X-Frdlweb-Proxy',  $serverVars['SERVER_ADDR']);		
 		
 	       foreach($this->_callStack as $_call){
 		    if(__FUNCTION__!== $_call[0]){
@@ -465,13 +543,13 @@ return $headers;
     	 
     	 ->filter(new RemoveEncodingFilter())
 		 
-	    ->filter(function ($request, $response, $next) use($host, $ClassResponse, $method) {
+	    ->filter(function ($request, $response, $next) use($host, $ClassResponse, $method, $serverVars) {
 
 			
 		      
 			 $request = $request->withHeader($this->fakeHeader, $host);
-			 $request = $request->withHeader('X-Frdlweb-Proxy', $_SERVER['SERVER_ADDR']);	
-			 $request = $request->withHeader('X-Forwarded-For', $_SERVER['REMOTE_ADDR']);			
+			 $request = $request->withHeader('X-Frdlweb-Proxy', $serverVars['SERVER_ADDR']);	
+			 $request = $request->withHeader('X-Forwarded-For', $serverVars['REMOTE_ADDR']);			
 
 						
 		    if(true===$this->HostHeaderOverwrite){			
