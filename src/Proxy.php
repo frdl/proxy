@@ -284,8 +284,10 @@ protected function choose_handler()
 		      
 			   $stream = new \Zend\Diactoros\Stream('php://memory', 'wb+');	
 			   $response =new ResponseImplementation($stream, 200, [
-				   'x-frdl-proxy-cache-exception' => $e->getMessage() 
+				  'x-frdl-proxy-exception' => $e->getMessage() 
 			   ]);
+			  $response = new $ClassResponse($response);
+			  
 			  
 			if(self::ERROR_23_PREFIX===substr($e->getMessage(),0,strlen(self::ERROR_23_PREFIX))  ){
 				$redirectUrl=$this->protocol.'://'. $this->targetSeverHost.$this->targetLocation;
@@ -329,14 +331,19 @@ protected function choose_handler()
 				$response = $response->withBody($stream);
 			}
 			   
-			$response = new $ClassResponse($response);   
+			   
 		}
+		
+		   
+		    $response = $response->withoutHeader('X-Powered-By');
 		 
 	        $headersRedirect = $response->getHeader(\GuzzleHttp\RedirectMiddleware::HISTORY_HEADER);
 		    if($headersRedirect){
 			 	$response = $response->withHeader('Location', $headersRedirect[0]);
 			 }
 		
+		
+		header_remove('X-Powered-By');
 		if(true===$verbose){
 		 $this->send($response);
 		}
