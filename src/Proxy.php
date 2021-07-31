@@ -29,6 +29,8 @@ use Kevinrob\GuzzleCache\Strategy\GreedyCacheStrategy;
 use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
 use Doctrine\Common\Cache\FilesystemCache;
 
+use Zend\Diactoros\Stream;
+
 class Proxy
 {
 	
@@ -316,10 +318,10 @@ protected function choose_handler()
 					
 				}			
 	
-			        $response =  $response->withBody($content);
+			        $response =  $response->withBody((new Stream)->createStream($content));
 			}else{
 				$response = $response->withStatus(500);
-				$response = $response->withBody($e->getMessage());
+				$response = $response->withBody((new Stream)->createStream($e->getMessage()));
 			}
 		}
 		 
