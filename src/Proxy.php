@@ -277,7 +277,7 @@ protected function choose_handler()
 		 }catch(\Exception $e){
 		       
 		        $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';
-		        $response = new $ClassResponse();
+		        $response = new $ClassResponse(0);
 		       
 			if(self::ERROR_23_PREFIX===substr($e->getMessage(),0,strlen(self::ERROR_23_PREFIX))  ){
 				$redirectUrl=$this->protocol.'://'. $this->targetSeverHost.$this->targetLocation;
