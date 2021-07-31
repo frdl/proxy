@@ -133,7 +133,7 @@ $stack->push(
 	      'Host',
 	      'Origin', 
 	      'Cookie', 
-	      'Cache-Control', 
+	  //    'Cache-Control', 
 	      'X-Frdl-Content-Negotiation',
 	      'X-Frdlweb-Content-Negotiation',
 	      'X-Webfan-Content-Negotiation',
