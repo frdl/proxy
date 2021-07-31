@@ -53,5 +53,5 @@ Built in cache feature:
 composer require doctrine/cache
 ````
 ````php
-withCacheDir(string $dir = null, int $ttl= 1800, bool $force=true)
+$proxy->withCacheDir(string $dir = null, int $ttl= 1800, bool $force=true)
 ````
