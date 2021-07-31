@@ -96,7 +96,7 @@ class Proxy
 		}
 		$this->serverVars=$serverVars;
 		
-     		$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $this->serverVars['SERVER_NAME'];
+     	$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $this->serverVars['SERVER_NAME'];
 		$this->httpHost = $httpHost ? $httpHost : $this->serverVars['HTTP_HOST'];
 		$this->protocol = $protocol ? $protocol : (($this->is_ssl()) ? 'https' : 'http');
 		$this->targetLocation = $targetLocation ? $targetLocation : $this->serverVars['REQUEST_URI'];
@@ -277,9 +277,11 @@ protected function choose_handler()
 		     $response = $ProxyRequest->toUri();
 		 }catch(\Exception $e){
 		       
-		        $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';
-		        $response = new $ClassResponse(new Response);
-		       
+		       // $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';
+		       // $response = new $ClassResponse(new Response);
+		       $response =new Response;
+			   
+			   
 			if(self::ERROR_23_PREFIX===substr($e->getMessage(),0,strlen(self::ERROR_23_PREFIX))  ){
 				$redirectUrl=$this->protocol.'://'. $this->targetSeverHost.$this->targetLocation;
 
