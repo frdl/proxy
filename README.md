@@ -47,3 +47,11 @@ if(!$proxy->bounce()){
 }
 ````
 
+### Cache
+Built in cache feature:
+````
+composer require doctrine/cache
+````
+````php
+withCacheDir(string $dir = null, int $ttl= 1800, bool $force=true)
+````
