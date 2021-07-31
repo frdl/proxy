@@ -10,7 +10,7 @@ use GuzzleHttp\Client as Client;
 
 use webfan\hps\patch\Uri as Uri;
 use webfan\hps\patch\Request as Request;
-use Zend\Diactoros\Response;
+use Zend\Diactoros\Response as ResponseImplementation;
 
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\Handler\CurlMultiHandler;
@@ -104,8 +104,8 @@ class Proxy
 		$this->deploy = $deploy;
 		$this->HostHeaderOverwrite = $HostHeaderOverwrite ? $HostHeaderOverwrite : false;
 		$this->fakeHeader = self::HEADER_HOST_IMPERSONATION;
-		$_SERVER['SERVER_ADDR'] = (isset($this->serverVars['SERVER_ADDR'])) ? $this->serverVars['SERVER_ADDR'] : \gethostbyname( $this->serverVars['SERVER_NAME'] );
-		$_SERVER['SERVER_NAME'] = (isset($this->serverVars['SERVER_NAME'])) ? $this->serverVars['SERVER_NAME'] : $this->serverVars['HTTP_HOST'];
+		$this->serverVars['SERVER_ADDR'] = (isset($this->serverVars['SERVER_ADDR'])) ? $this->serverVars['SERVER_ADDR'] : \gethostbyname( $this->serverVars['SERVER_NAME'] );
+		$this->serverVars['SERVER_NAME'] = (isset($this->serverVars['SERVER_NAME'])) ? $this->serverVars['SERVER_NAME'] : $this->serverVars['HTTP_HOST'];
 		
 		$this->_handler=$this->choose_handler();
 		
@@ -133,10 +133,10 @@ public function withCacheMiddleware(CacheMiddleware $CacheMiddleware){
 public function withCacheDir(string $dir = null, int $ttl= 1800, bool $force=true){
 	
 	if(null === $dir){
-	   $dir =   \sys_get_temp_dir().\DIRECTORY_SEPARATOR.sha1(__FILE__);	
+	   $dir =   \sys_get_temp_dir().\DIRECTORY_SEPARATOR.sha1(__FILE__).\DIRECTORY_SEPARATOR.sha1_file(__FILE__);	
 	}
 	if(true === $force && !is_dir($dir)){
-	   mkdir($dir, 0755, true);	
+	   mkdir($dir, 0777, true);	
 	}
 	
 	$stack = HandlerStack::create();
@@ -279,7 +279,7 @@ protected function choose_handler()
 		       
 		       // $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';
 		       // $response = new $ClassResponse(new Response);
-		       $response =new Response;
+		       $response =new ResponseImplementation;
 			   
 			   
 			if(self::ERROR_23_PREFIX===substr($e->getMessage(),0,strlen(self::ERROR_23_PREFIX))  ){
@@ -288,6 +288,7 @@ protected function choose_handler()
                 $opts = ['http' =>
                              [
                                 'method'  => $this->method,
+                                'ignore_errors' => true,     
                             ]
                 ];
 
@@ -300,7 +301,7 @@ protected function choose_handler()
 				
 				  $context  = stream_context_create($opts);
 
-                                $content = file_get_contents($redirectUrl, false, $context);
+                                $content = @file_get_contents($redirectUrl, false, $context);
 			 
 				foreach($http_response_header as $i => $header){
 
