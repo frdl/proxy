@@ -281,9 +281,12 @@ protected function choose_handler()
 		       
 		        $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';
 		       // $response = new $ClassResponse(new Response);
-		       $response =new ResponseImplementation;
+		      
 			   $stream = new \Zend\Diactoros\Stream('php://memory', 'wb+');	
-			   
+			   $response =new ResponseImplementation($stream, 200, [
+				   'x-frdl-proxy-cache-exception' => $e->getMessage() 
+			   ]);
+			  
 			if(self::ERROR_23_PREFIX===substr($e->getMessage(),0,strlen(self::ERROR_23_PREFIX))  ){
 				$redirectUrl=$this->protocol.'://'. $this->targetSeverHost.$this->targetLocation;
 
