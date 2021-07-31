@@ -36,6 +36,8 @@ class Proxy
 	const HEADER_HOST_IMPERSONATION = 'X-Frdlweb-Proxy-For-Host';
 	const HEADER_IP_IMPERSONATION = 'X-Forwarded-For';
 	
+	const ERROR_23_PREFIX = 'cURL error 23: Unrecognized content encoding type. libcurl understands deflate, gzip content encodings. (see https://curl.haxx.se/libcurl/c/libcurl-errors.html)';
+	
 	
 	protected $targetSeverHost;
 	protected $httpHost;
@@ -48,6 +50,7 @@ class Proxy
 	protected $_callStack = [];
 	protected $_config=[];
 	protected $_handler;
+	protected $serverVars = [];
 	
 	public function __call($name, $params){
 	    $ix = count($this->_callStack);
@@ -71,21 +74,37 @@ class Proxy
         }
 	
 	
-	public function __construct(string $deploy = null, string $targetLocation = null, string $targetSeverHost = null, string $httpHost = null, string $method = null, $protocol = null, bool $HostHeaderOverwrite = null){
-
+	public function __construct(string $deploy = null,
+				    string $targetLocation = null,
+				    string $targetSeverHost = null, 
+				    string $httpHost = null, 
+				    string $method = null,
+				    string $protocol = null, 
+				    bool $HostHeaderOverwrite = null,
+				    array $serverVars = null){
+                try{
+		   ini_set('expose_php', 'off');
+		}catch(\Exception $e){
+		   trigger_error($e->getMessage(), \E_USER_WARNING);
+		}
 		$l = new PatchAutoloadFunctions();
 		
+			
+		if(null===$serverVars){
+		  $serverVars = $_SERVER;	
+		}
+		$this->serverVars=$serverVars;
 		
-     		$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $_SERVER['SERVER_NAME'];
-		$this->httpHost = $httpHost ? $httpHost : $_SERVER['HTTP_HOST'];
+     		$this->targetSeverHost = $targetSeverHost ? $targetSeverHost : $this->serverVars['SERVER_NAME'];
+		$this->httpHost = $httpHost ? $httpHost : $this->serverVars['HTTP_HOST'];
 		$this->protocol = $protocol ? $protocol : (($this->is_ssl()) ? 'https' : 'http');
-		$this->targetLocation = $targetLocation ? $targetLocation : $_SERVER['REQUEST_URI'];
-		$this->method = $method ? $method : $_SERVER['REQUEST_METHOD'];	
+		$this->targetLocation = $targetLocation ? $targetLocation : $this->serverVars['REQUEST_URI'];
+		$this->method = $method ? $method : $this->serverVars['REQUEST_METHOD'];	
 		$this->deploy = $deploy;
 		$this->HostHeaderOverwrite = $HostHeaderOverwrite ? $HostHeaderOverwrite : false;
 		$this->fakeHeader = self::HEADER_HOST_IMPERSONATION;
-		$_SERVER['SERVER_ADDR'] = (isset($_SERVER['SERVER_ADDR'])) ? $_SERVER['SERVER_ADDR'] : \gethostbyname( $_SERVER['SERVER_NAME'] );
-		$_SERVER['SERVER_NAME'] = (isset($_SERVER['SERVER_NAME'])) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
+		$_SERVER['SERVER_ADDR'] = (isset($this->serverVars['SERVER_ADDR'])) ? $this->serverVars['SERVER_ADDR'] : \gethostbyname( $this->serverVars['SERVER_NAME'] );
+		$_SERVER['SERVER_NAME'] = (isset($this->serverVars['SERVER_NAME'])) ? $this->serverVars['SERVER_NAME'] : $this->serverVars['HTTP_HOST'];
 		
 		$this->_handler=$this->choose_handler();
 		
@@ -230,18 +249,19 @@ protected function choose_handler()
 	}
 	
 	public function handle(bool $verbose = true){
-		$response = false;
-	 
+		$response = false;				
+		 
+		  $serverVars = $this->serverVars;			
 		
 	 if(!$this->bounce()){	
-		$response =  $this->createProxy(
+		$ProxyRequest =  $this->createProxy(
 	                                 $this->targetSeverHost,
 		                             $this->protocol,
 		                             $this->targetLocation,
 		                             $this->httpHost,
 		                             $this->method,
 		                             $this->_config,
-	                                    $_SERVER
+	                                    $this->serverVars
 	                                   /*$reverse_host = null,
 		                                 $reverse_protocol = null,
 										 $reverse_uri = null,
@@ -250,9 +270,55 @@ protected function choose_handler()
 		                                 array $config = ['http_errors' => true],
 							             $serverVars = null,
 							             $ClassResponse = null
-										 */)->toUri();
+										 */);//->toUri();
 
+	       try{
+		     $response = $ProxyRequest->toUri();
+		 }catch(\Exception $e){
+		       
+		        $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';
+		        $response = new $ClassResponse();
+		       
+			if(self::ERROR_23_PREFIX===substr($e->getMessage(),0,strlen(self::ERROR_23_PREFIX))  ){
+				$redirectUrl=$this->protocol.'://'. $this->targetSeverHost.$this->targetLocation;
+
+                $opts = ['http' =>
+                             [
+                                'method'  => $this->method,
+                            ]
+                ];
+
+				if(isset($_POST) && ('POST'===$this->method || 'PUT'=== $this->method) ){
+				   $postdata = \http_build_query($_POST);
+					if(!isset($opts['http']['header']))$opts['http']['header']=[];
+					$opts['http']['header']['Content-Type']='application/x-www-form-urlencoded';
+					$opts['http']['content']=$postdata;
+				}
+				
+				  $context  = stream_context_create($opts);
+
+                                $content = file_get_contents($redirectUrl, false, $context);
+			 
+				foreach($http_response_header as $i => $header){
+
+                                   if(0===$i){
+                                            preg_match('{HTTP\/\S*\s(\d{3})}', $header, $match);
+                                            $statusCode = intval($match[1]);
+					    $response = $response->withStatus($statusCode);
+                                    }else{
+					$h = explode(':', $header, 2);
+					$response = $response->withHeader(trim($h[0]), trim($h[1]));   
+				   }
+					
+				}			
 	
+			        $response =  $response->withBody($content);
+			}else{
+				$response = $response->withStatus(500);
+				$response = $response->withBody($e->getMessage());
+			}
+		}
+		 
 	        $headersRedirect = $response->getHeader(\GuzzleHttp\RedirectMiddleware::HISTORY_HEADER);
 		    if($headersRedirect){
 			 	$response = $response->withHeader('Location', $headersRedirect[0]);
@@ -268,10 +334,10 @@ protected function choose_handler()
 	}
 	
 	public function parseHeaders($serverVars = null, &$ifNoneMatch = null, &$ifModifiedSince=null){
-if( !is_array($serverVars))$serverVars = $_SERVER;
+if( !is_array($serverVars))$serverVars = $this->serverVars;
 
 $headers = array();
-foreach($_SERVER as $key=>$value)
+foreach($serverVars as $key=>$value)
 {
                 if (substr($key,0,5)=="HTTP_") {
                      $key=str_replace(" ","-",ucwords(strtolower(str_replace("_"," ",substr($key,5)))));
@@ -328,7 +394,7 @@ return $headers;
 		//if(!defined('\MX_SESSION_NAME'))define('MX_SESSION_NAME', 'PHPSESSID');
 		
 		
-		$server = $server?:$_SERVER;
+		$server = $server?:$this->serverVars;
 		$files = $files?:$_FILES;
 		$cookies = $cookies?:$_COOKIE;
 		$query = $query?:$_GET;
@@ -455,7 +521,7 @@ return $headers;
 							             $ClassResponse = null){
 				
 		if(null===$serverVars){
-		  $serverVars = $_SERVER;	
+		  $serverVars = $this->serverVars;	
 		}
 		if(null===$reverse_host){
 	      $reverse_host = $serverVars['HTTP_HOST'];	
