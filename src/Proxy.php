@@ -275,14 +275,14 @@ protected function choose_handler()
 							             $ClassResponse = null
 										 */);//->toUri();
 
-	       try{
+	      try{
 		     $response = $ProxyRequest->toUri();
 		 }catch(\Exception $e){
 		       
-		       // $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';
+		        $ClassResponse ='\\'.trim(__NAMESPACE__, '\\ ').'\\'.'Response';
 		       // $response = new $ClassResponse(new Response);
 		       $response =new ResponseImplementation;
-			   
+			   $stream = new \Zend\Diactoros\Stream('php://memory', 'wb+');	
 			   
 			if(self::ERROR_23_PREFIX===substr($e->getMessage(),0,strlen(self::ERROR_23_PREFIX))  ){
 				$redirectUrl=$this->protocol.'://'. $this->targetSeverHost.$this->targetLocation;
@@ -318,11 +318,15 @@ protected function choose_handler()
 					
 				}			
 	
-			        $response =  $response->withBody((new Stream)->createStream($content));
+				    $stream->write($content);
+			        $response =  $response->withBody($stream);
 			}else{
+				$stream->write($e->getMessage());
 				$response = $response->withStatus(500);
-				$response = $response->withBody((new Stream)->createStream($e->getMessage()));
+				$response = $response->withBody($stream);
 			}
+			   
+			$response = new $ClassResponse($response);   
 		}
 		 
 	        $headersRedirect = $response->getHeader(\GuzzleHttp\RedirectMiddleware::HISTORY_HEADER);
