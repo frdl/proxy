@@ -726,7 +726,7 @@ return $headers;
  }//foreach   
 
 										 
-                 $MyResponse = $MyResponse->withHeader('Vary', implode(', ', $this->vary);
+                 $MyResponse = $MyResponse->withHeader('Vary', implode(', ', $this->vary));
 		 $MyResponse = $MyResponse->withHeader('X-Powered-By', 'Webfan Homepagesystem', false );
 			
 		 return $MyResponse;
