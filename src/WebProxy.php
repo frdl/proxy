@@ -54,6 +54,19 @@ class WebProxy
 	protected $_config=[];
 	protected $_handler;
 	protected $serverVars = [];
+	protected $vary = [
+	      'Authorization', 
+	      'Host',
+	      'Origin', 
+	      'Host',
+	      'Cookie', 
+	      'User-Agent',
+	  //    'Cache-Control', 
+	      'X-Frdl-Content-Negotiation',
+	      'X-Frdlweb-Content-Negotiation',
+	      'X-Webfan-Content-Negotiation',
+      ];
+	
 	
 	public function __call($name, $params){
 	    $ix = count($this->_callStack);
@@ -123,6 +136,12 @@ class WebProxy
 						];
 	}
 
+	
+public function withVary(array $Vary){
+	$this->vary=array_merge($this->vary, $Vary);
+  return $this;
+}
+	
 public function withCacheMiddleware(CacheMiddleware $CacheMiddleware){	
    $stack = HandlerStack::create();	
    $stack->push($CacheMiddleware);
@@ -150,17 +169,7 @@ $stack->push(
         new FilesystemCache($dir)
       ),
       $ttl, // the TTL in seconds
-      new KeyValueHttpHeader([
-	      'Authorization', 
-	      'Host',
-	      'Origin', 
-	      'Host',
-	      'Cookie', 
-	  //    'Cache-Control', 
-	      'X-Frdl-Content-Negotiation',
-	      'X-Frdlweb-Content-Negotiation',
-	      'X-Webfan-Content-Negotiation',
-      ]) 
+      new KeyValueHttpHeader($this->vary) 
     )
   ),
   'greedy-cache'
@@ -717,7 +726,7 @@ return $headers;
  }//foreach   
 
 										 
-
+                 $MyResponse = $MyResponse->withHeader('Vary', implode(', ', $this->vary);
 		 $MyResponse = $MyResponse->withHeader('X-Powered-By', 'Webfan Homepagesystem', false );
 			
 		 return $MyResponse;
