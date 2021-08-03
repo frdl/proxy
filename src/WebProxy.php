@@ -1,6 +1,6 @@
 <?php
 
-namespace frdl\Proxy
+namespace frdl\Proxy;
 
 use Proxy\Adapter\Guzzle\GuzzleAdapter as GuzzleAdapter;
 use Proxy\Filter\RewriteLocationFilter as RewriteLocationFilter;
