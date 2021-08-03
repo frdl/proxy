@@ -1,6 +1,6 @@
-<?php 
+<?php
 
-namespace frdl\Proxy;
+namespace frdl\Proxy
 
 use Proxy\Adapter\Guzzle\GuzzleAdapter as GuzzleAdapter;
 use Proxy\Filter\RewriteLocationFilter as RewriteLocationFilter;
@@ -31,7 +31,7 @@ use Doctrine\Common\Cache\FilesystemCache;
 
 use Zend\Diactoros\Stream;
 
-class Proxy
+class WebProxy
 {
 	
 	const HEADER_DEPLOY_NEGOTIATION = 'X-Frdlweb-Negotiation-Stage';
@@ -311,18 +311,27 @@ protected function choose_handler()
                                 $content = @file_get_contents($redirectUrl, false, $context);
 			 
 				foreach($http_response_header as $i => $header){
-
+             
                                    if(0===$i){
                                             preg_match('{HTTP\/\S*\s(\d{3})}', $header, $match);
                                             $statusCode = intval($match[1]);
-					    $response = $response->withStatus($statusCode);
-                                    }else{
-					$h = explode(':', $header, 2);
-					$response = $response->withHeader(trim($h[0]), trim($h[1]));   
+					                       $response = $response->withStatus($statusCode);
+									   
+									
+									   
+                                    }else{								 
+				                       	$h = explode(':', $header, 2); 
+									   
+									      if(isset($_GET['test'])){
+									   			  print_r($h[0].': ');  
+										   print_r( $h[1].'<br />');  
+									   }
+									   
+									    $response = $response->withHeader(trim($h[0]), trim($h[1]));   
 				   }
 					
 				}			
-	
+	                          
 				    $stream->write($content);
 			        $response =  $response->withBody($stream);
 			}else{
