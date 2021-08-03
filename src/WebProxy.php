@@ -320,14 +320,8 @@ protected function choose_handler()
 									
 									   
                                     }else{								 
-				                       	$h = explode(':', $header, 2); 
-									   
-									      if(isset($_GET['test'])){
-									   			  print_r($h[0].': ');  
-										   print_r( $h[1].'<br />');  
-									   }
-									   
-									    $response = $response->withHeader(trim($h[0]), trim($h[1]));   
+				                       	$h = explode(':', $header, 2); 							
+							$response = $response->withHeader(trim($h[0]), trim($h[1]));   
 				   }
 					
 				}			
