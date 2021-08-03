@@ -154,6 +154,7 @@ $stack->push(
 	      'Authorization', 
 	      'Host',
 	      'Origin', 
+	      'Host',
 	      'Cookie', 
 	  //    'Cache-Control', 
 	      'X-Frdl-Content-Negotiation',
