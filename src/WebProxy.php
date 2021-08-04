@@ -187,7 +187,10 @@ public function withCacheDir(string $dir = null, int $ttl= 1800, bool $force=tru
 	
  
 $this->onShutdown(function($CacheDir, $maxCacheTime){		
-                   
+                                   if(!class_exists(\webfan\hps\patch\Fs::class)){
+					  trigger_error('Missing '.\webfan\hps\patch\Fs::class.', you should manage to prune the cache in '.__METHOD__, \E_USER_WARNING);
+					   return;
+				   }
 						  \webfan\hps\patch\Fs::pruneDir($CacheDir, $maxCacheTime, true,  
 														 (
 															    'tmp' !== basename($CacheDir)										
