@@ -1,4 +1,5 @@
-<?php
+<?php 
+
 
 namespace frdl\Proxy;
 
@@ -58,8 +59,8 @@ class WebProxy
 	      'Authorization', 
 	      'Host',
 	      'Origin', 
-	      'Host',
-	      'Cookie', 
+	   
+	    //  'Cookie', 
 	      'User-Agent',
 	  //    'Cache-Control', 
 	      'X-Frdl-Content-Negotiation',
