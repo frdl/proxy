@@ -1,7 +1,7 @@
 <?php
 
 namespace frdl\Proxy;
-use frdl\Prox\WebProxy;
+use frdl\Proxy\WebProxy;
 class Proxy extends WebProxy
 {
   
