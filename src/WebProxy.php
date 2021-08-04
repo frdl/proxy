@@ -176,7 +176,7 @@ public function withCacheDir(string $dir = null, int $ttl= 1800, bool $force=tru
 	
 	if(null === $dir){
 	   $dir =   \sys_get_temp_dir().\DIRECTORY_SEPARATOR
-		   'guzzle-proxy-cache-'.sha1(__CLASS__)
+		   .'guzzle-proxy-cache-'.sha1(__CLASS__)
 		   .\DIRECTORY_SEPARATOR
 		   .sha1_file(__FILE__);	
 	}
