@@ -41,7 +41,7 @@ class WebProxy
 	const HEADER_IP_IMPERSONATION = 'X-Forwarded-For';
 	
 	const ERROR_23_PREFIX = 'cURL error 23: Unrecognized content encoding type. libcurl understands deflate, gzip content encodings. (see https://curl.haxx.se/libcurl/c/libcurl-errors.html)';
-	
+	 
 	
 	protected $targetSeverHost;
 	protected $httpHost;
@@ -57,12 +57,15 @@ class WebProxy
 	protected $serverVars = [];
 	protected $vary = [
 	      'Authorization', 
-	      'Host',
+	      'X-Authorization', 
+	      'Host', 
+	      'Path',
 	      'Origin', 
-	   
+	       'Accept-Encoding',
 	    //  'Cookie', 
 	      'User-Agent',
 	  //    'Cache-Control', 
+	      'X-Requested-With',
 	      'X-Frdl-Content-Negotiation',
 	      'X-Frdlweb-Content-Negotiation',
 	      'X-Webfan-Content-Negotiation',
@@ -152,16 +155,49 @@ public function withCacheMiddleware(CacheMiddleware $CacheMiddleware){
 }
 	
 	
+  protected function _webfan_getShutdowner(){	  
+		 return (class_exists(\frdlweb\Thread\ShutdownTasks::class, true ))
+					  ? \frdlweb\Thread\ShutdownTasks::mutex()
+					  : function(){
+						   call_user_func_array('register_shutdown_function', func_get_args());
+						   register_shutdown_function(function(){
+							   $t = class_exists(\frdlweb\Thread\ShutdownTasks::class, $load);
+						   });
+					  };
+  }	
+
+
+
+  public function onShutdown(){
+	  return call_user_func_array($this->_webfan_getShutdowner(), func_get_args()); 
+  }	
+	
 public function withCacheDir(string $dir = null, int $ttl= 1800, bool $force=true){
 	
 	if(null === $dir){
-	   $dir =   \sys_get_temp_dir().\DIRECTORY_SEPARATOR.sha1(__FILE__).\DIRECTORY_SEPARATOR.sha1_file(__FILE__);	
+	   $dir =   \sys_get_temp_dir().\DIRECTORY_SEPARATOR
+		   'guzzle-proxy-cache-'.sha1(__CLASS__)
+		   .\DIRECTORY_SEPARATOR
+		   .sha1_file(__FILE__);	
 	}
 	if(true === $force && !is_dir($dir)){
 	   mkdir($dir, 0777, true);	
 	}
 	
-	$stack = HandlerStack::create();
+	
+ 
+$this->onShutdown(function($CacheDir, $maxCacheTime){		
+                   
+						  \webfan\hps\patch\Fs::pruneDir($CacheDir, $maxCacheTime, true,  
+														 (
+															    'tmp' !== basename($CacheDir)										
+															 && 'tmp' !== basename(dirname($CacheDir))											 
+														 )
+														);		
+      
+				  }, $dir, $ttl);	
+	
+$stack = HandlerStack::create();
 	
 $stack->push(
   new CacheMiddleware(
