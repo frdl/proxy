@@ -135,7 +135,7 @@ class WebProxy
 							//'handler' => $this->choose_handler(),									
 							'headers' => [											
 								'user-agent' => __CLASS__,	
-								'accept-encoding'=>'deflate, gzip, br',
+								//'accept-encoding'=>'deflate, gzip, br',
 							],									
 						];
 	}
