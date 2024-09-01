@@ -5,9 +5,11 @@
         "php": ">=7.1",
         "laminas/laminas-diactoros": "*",
         "vendor-patch/proxy": "*",
-        "webfan3/hps" : "*",
         "laminas/laminas-httphandlerrunner" : "*",
         "kevinrob/guzzle-cache-middleware" : "*"
+    },
+    "require-dev" : {        
+        "webfan3/hps" : "*"
     },
     "homepage": "https://github.com/frdl/proxy",
     "license": "MIT",
