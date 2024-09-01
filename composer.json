@@ -4,7 +4,7 @@
     "require": {
         "php": ">=7.1",
         "laminas/laminas-diactoros": "*",
-        "jenssegers/proxy" : "3.1.0",
+        "vendor-patch/proxy": "*",
         "webfan3/hps" : "*",
         "laminas/laminas-httphandlerrunner" : "*",
         "kevinrob/guzzle-cache-middleware" : "*"
